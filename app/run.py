@@ -32,6 +32,12 @@ df = pd.read_sql_table('disaster_messages', engine)
 # load model
 model = joblib.load("../models/classifier.pkl")
 
+def count_categories_by_genre(df, genre_type=None):
+    if genre_type:
+        cat_count = df[df.genre == genre_type].drop(columns='genre').sum(axis=0).sort_values(ascending=False)
+    else:
+        cat_count = df.drop(columns='genre').sum(axis=0).sort_values(ascending=False)
+    return cat_count.index, cat_count.values
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
@@ -39,10 +45,16 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
+    categories = df.iloc[:, 3:]
+    cat_names, cat_count = count_categories_by_genre(categories)
+    direct_cat_names, direct_cat_count = count_categories_by_genre(categories, 'direct')
+    news_cat_names, news_cat_count = count_categories_by_genre(categories, 'news')
+    social_cat_names, social_cat_count = count_categories_by_genre(categories, 'social')
+
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
     graphs = [
@@ -63,7 +75,79 @@ def index():
                     'title': "Genre"
                 }
             }
-        }
+        },
+                {
+            'data': [
+                Bar(
+                    x=cat_names[:10],
+                    y=cat_count[:10]
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 10 Distribution of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=direct_cat_names[:10],
+                    y=direct_cat_count[:10]
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 10 Distribution of Categories of Direct Genre',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+                {
+            'data': [
+                Bar(
+                    x=social_cat_names[:10],
+                    y=social_cat_count[:10]
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 10 Distribution of Categories of Social Genre',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
+                {
+            'data': [
+                Bar(
+                    x=news_cat_names[:10],
+                    y=news_cat_count[:10]
+                )
+            ],
+
+            'layout': {
+                'title': 'Top 10 Distribution of Categories of Social Genre',
+                'yaxis': {
+                    'title': "Count"
+                },
+                'xaxis': {
+                    'title': "Category"
+                }
+            }
+        },
     ]
     
     # encode plotly graphs in JSON

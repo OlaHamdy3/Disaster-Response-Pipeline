@@ -16,8 +16,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 
+from transformer import TextLengthExtractor
 
 def load_data(database_filepath):
     '''
@@ -65,13 +66,18 @@ def build_model():
         model - classification model
     '''
     pipeline = Pipeline([
-    ('vect', CountVectorizer(tokenizer=tokenize, token_pattern=None)),
-    (('tfidf', TfidfTransformer())),
+    ('features', FeatureUnion([
+        ('text_pipeline', Pipeline([
+            ('vect', CountVectorizer(tokenizer=tokenize, token_pattern=None)), 
+            (('tfidf', TfidfTransformer()))
+            ])),
+        ('text_lngth', TextLengthExtractor())
+        ])),
     ('model', MultiOutputClassifier(DecisionTreeClassifier()))
     ])
     parameters = {
-    'vect__ngram_range': ((1, 1), (1, 2)),
-    'tfidf__smooth_idf': [True, False],
+    'features__text_pipeline__vect__ngram_range': ((1, 1), (1, 2)),
+    'features__text_pipeline__tfidf__smooth_idf': [True, False],
     'model__estimator__max_depth': [3, 5, 7],
     'model__estimator__min_samples_split': [2, 3],
     }
